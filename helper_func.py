@@ -6,12 +6,12 @@ import re
 import asyncio
 from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus
-from config import FORCESUB_CHANNEL, FORCESUB_CHANNEL2, FORCESUB_CHANNEL3, ADMINS
+from config import FORCESUB_CHANNEL, FORCESUB_CHANNEL2, FORCESUB_CHANNEL3, ADMINS, VERIFY_IMAGE
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
 from pyrogram.errors import FloodWait
 from shortzy import Shortzy
 from datetime import datetime
-from database.database import user_data, db_verify_status, db_update_verify_status
+from database.database import user_data, db_verify_status, db_update_verify_status, db_get_link
 
 async def is_subscribed(filter, client, update):
     if not (FORCESUB_CHANNEL or FORCESUB_CHANNEL2 or FORCESUB_CHANNEL3):
@@ -138,6 +138,14 @@ async def get_shortlink(url, api, link):
     except Exception as e:
         print(f"[v0] Shortlink generation failed: {e}")
         return link
+
+async def get_verify_image(file_id: str = "") -> str:
+    """Get verification image - uses custom image if available, otherwise uses default VERIFY_IMAGE"""
+    if file_id:
+        link = await db_get_link(file_id)
+        if link.get('image'):
+            return link['image']
+    return VERIFY_IMAGE
 
 def get_exp_time(seconds):
     periods = [('days', 86400), ('hours', 3600), ('mins', 60), ('secs', 1)]
