@@ -159,6 +159,27 @@ async def start_command(client: Client, message: Message):
             access_allowed = False
             access_type = None  # 'full', 'temporary', or None
             
+            # Extract file_id from the base64_string for custom image retrieval
+            try:
+                base64_string = message.text.split(" ", 1)[1]
+                _string = await decode(base64_string)
+                argument = _string.split("-")
+                
+                # Construct file_id based on the argument format
+                if len(argument) == 3:
+                    # Batch link format: batch-{f_msg_id}-{s_msg_id}
+                    start_id = int(int(argument[1]) / abs(client.db_channel.id))
+                    end_id = int(int(argument[2]) / abs(client.db_channel.id))
+                    file_id_for_image = f"batch-{start_id}-{end_id}"
+                elif len(argument) == 2:
+                    # Single file link format: get-{msg_id}
+                    msg_id = int(int(argument[1]) / abs(client.db_channel.id))
+                    file_id_for_image = f"get-{msg_id}"
+                else:
+                    file_id_for_image = ""
+            except:
+                file_id_for_image = ""
+            
             # Determine access level based on dual verification state
             if step == 2:
                 # User is at step 2 - check if step 2 hasn't expired
@@ -204,8 +225,8 @@ async def start_command(client: Client, message: Message):
                         if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')):
                             btn.append([InlineKeyboardButton('How to use the bot', url=TUT_VID)])
                         
-                        file_id = verify_status.get('link', '')
-                        verify_image = await get_verify_image(file_id)
+                        # Use the extracted file_id_for_image to get custom image
+                        verify_image = await get_verify_image(file_id_for_image)
                         caption_text = f"Your token is expired or not verified. Complete verification to access files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_1)}"
                         await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                     else:
@@ -224,8 +245,8 @@ async def start_command(client: Client, message: Message):
                         if TUT_VID and isinstance(TUT_VID, str) and TUT_VID.startswith(('http://', 'https://', 'tg://')):
                             btn.append([InlineKeyboardButton('How to use the bot', url=TUT_VID)])
                         
-                        file_id = verify_status.get('link', '')
-                        verify_image = await get_verify_image(file_id)
+                        # Use the extracted file_id_for_image to get custom image
+                        verify_image = await get_verify_image(file_id_for_image)
                         caption_text = f"Complete second verification to continue accessing files.\n\nToken Timeout: {get_exp_time(VERIFY_EXPIRE_2)}"
                         await send_verification_message(message, caption_text, verify_image, InlineKeyboardMarkup(btn))
                     else:
