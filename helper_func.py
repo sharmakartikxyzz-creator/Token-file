@@ -144,10 +144,15 @@ async def get_verify_image(file_id: str = "") -> str:
     if file_id:
         try:
             link = await db_get_link(file_id)
-            if link and link.get('image'):
-                return link['image']
-        except:
-            pass
+            if link:
+                # Check for batch image first (for batch links)
+                if file_id.startswith('batch-') and link.get('batch_image'):
+                    return link['batch_image']
+                # Check for regular image (for single file links)
+                elif link.get('image'):
+                    return link['image']
+        except Exception as e:
+            print(f"Error fetching verify image: {e}")
     return VERIFY_IMAGE
 
 def get_exp_time(seconds):
