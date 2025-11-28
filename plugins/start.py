@@ -50,6 +50,7 @@ async def send_verification_message(message, caption_text, verify_image, reply_m
     """Send verification message with or without image"""
     if verify_image and isinstance(verify_image, str) and verify_image.strip():
         try:
+            print(f"[DEBUG] Attempting to send image: {verify_image}")
             await message.reply_photo(
                 photo=verify_image,
                 caption=caption_text,
@@ -57,10 +58,13 @@ async def send_verification_message(message, caption_text, verify_image, reply_m
                 protect_content=False,
                 quote=True
             )
-        except:
+            print(f"[DEBUG] Image sent successfully!")
+        except Exception as e:
             # If image fails, send text only
+            print(f"[DEBUG] Failed to send image: {e}")
             await message.reply(caption_text, reply_markup=reply_markup, protect_content=False, quote=True)
     else:
+        print(f"[DEBUG] No valid image provided, sending text only. Image value: {verify_image}")
         await message.reply(caption_text, reply_markup=reply_markup, protect_content=False, quote=True)
 
 
@@ -164,6 +168,7 @@ async def start_command(client: Client, message: Message):
                 base64_string = message.text.split(" ", 1)[1]
                 _string = await decode(base64_string)
                 argument = _string.split("-")
+                print(f"[DEBUG] Decoded string: {_string}, argument: {argument}")
                 
                 # Construct file_id based on the argument format
                 if len(argument) == 3:
@@ -171,14 +176,18 @@ async def start_command(client: Client, message: Message):
                     start_id = int(int(argument[1]) / abs(client.db_channel.id))
                     end_id = int(int(argument[2]) / abs(client.db_channel.id))
                     file_id_for_image = f"batch-{start_id}-{end_id}"
+                    print(f"[DEBUG] Batch link detected, file_id_for_image: {file_id_for_image}")
                 elif len(argument) == 2:
                     # Single file link format: get-{msg_id}
                     msg_id = int(int(argument[1]) / abs(client.db_channel.id))
                     file_id_for_image = f"get-{msg_id}"
+                    print(f"[DEBUG] Single link detected, file_id_for_image: {file_id_for_image}")
                 else:
                     file_id_for_image = ""
-            except:
+                    print(f"[DEBUG] Unknown argument format, file_id_for_image set to empty")
+            except Exception as e:
                 file_id_for_image = ""
+                print(f"[DEBUG] Error extracting file_id: {e}")
             
             # Determine access level based on dual verification state
             if step == 2:
